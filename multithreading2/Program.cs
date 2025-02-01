@@ -11,10 +11,10 @@ namespace multithreading2
             public int Track { get; set; }
         }
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            int numberOfHorses = 5; 
-            int finishLine = 50; 
+            int numberOfHorses = 5;
+            int finishLine = 50;
             Random random = new Random();
 
             Horse[] horses = new Horse[numberOfHorses];
@@ -29,25 +29,24 @@ namespace multithreading2
             Console.WriteLine("Натисніть Enter для старту гонки...");
             Console.ReadLine();
 
-            //запуск потоків для кожного коня
+            //запуск асинхронних задач для кожного коня
             for (int i = 0; i < numberOfHorses; i++)
             {
-                int horseIndex = i;  
-                tasks[i] = Task.Run(() =>
-                {
-                    RunRace(horses[horseIndex], finishLine, random);
-                });
+                int horseIndex = i;
+                tasks[i] = RunRaceAsync(horses[horseIndex], finishLine, random);
             }
 
-            Task.WhenAll(tasks).Wait();
-            Console.WriteLine("\n\n\n\nРезультати перегонів:");
-            foreach (var horse in horses.OrderBy(h => h.Time)) 
+            //ожидаем завершения всех задач
+            await Task.WhenAll(tasks);
+
+            Console.WriteLine("\n\nРезультати перегонів:");
+            foreach (var horse in horses.OrderBy(h => h.Time))
             {
                 Console.WriteLine($"Конь {horse.Number} завершив за {horse.Time} секунд");
             }
         }
 
-        static void RunRace(Horse horse, int finishLine, Random random)
+        static async Task RunRaceAsync(Horse horse, int finishLine, Random random)
         {
             int distanceCovered = 0;
             int timeTaken = 0;
@@ -55,7 +54,7 @@ namespace multithreading2
 
             while (distanceCovered < finishLine)
             {
-                int speed = random.Next(1, 10); 
+                int speed = random.Next(1, 10);
                 distanceCovered += speed;
 
                 if (distanceCovered > finishLine)
@@ -63,7 +62,7 @@ namespace multithreading2
                     distanceCovered = finishLine;
                 }
 
-                Thread.Sleep(100);
+                await Task.Delay(100); 
                 timeTaken++;
 
                 str.Clear();
@@ -72,14 +71,14 @@ namespace multithreading2
                 str.Append(']');
                 str.Append($" {distanceCovered}/{finishLine}");
 
-                lock (Console.Out) // використовуємо для коректного виводу доріжок у консоль
+                lock (Console.Out) //используеться для коректного выводв в консоль
                 {
-                    Console.SetCursorPosition(0, horse.Track); 
+                    Console.SetCursorPosition(0, horse.Track);
                     Console.Write(str.ToString());
                 }
             }
 
-            horse.Time = timeTaken; 
+            horse.Time = timeTaken;
         }
     }
 }
